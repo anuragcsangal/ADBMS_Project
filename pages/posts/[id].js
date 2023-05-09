@@ -1,11 +1,11 @@
 import Head from 'next/head'
 import Link from 'next/link'
 
-export default function Home({ posts }) {
+export default function Post({ post }) {
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
       <Head>
-        <title>Blog</title>
+        <title>{post.title}</title>
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -27,28 +27,32 @@ export default function Home({ posts }) {
       </header>
 
       <main>
-        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-          {posts.map((post) => (
-            <div key={post._id} className="border border-gray-200 rounded-lg overflow-hidden">
-              <div className="bg-gray-100 px-4 py-2 font-medium">
-                <Link href={`/posts/${post._id}`}>
-                  <a>{post.title}</a>
-                </Link>
-              </div>
-              <div className="p-4">{post.content}</div>
-              <div className="bg-gray-100 px-4 py-2 text-sm text-gray-500">
-                {new Date(post.date).toLocaleDateString()}
-              </div>
-            </div>
-          ))}
-        </div>
+        <article>
+          <h1 className="text-4xl font-bold mb-4">{post.title}</h1>
+          <div className="text-gray-500 mb-4">
+            {new Date(post.date).toLocaleDateString()}
+          </div>
+          <div dangerouslySetInnerHTML={{ __html: post.content }} />
+        </article>
       </main>
     </div>
   )
 }
 
-export async function getStaticProps() {
+export async function getStaticPaths() {
   const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts`)
   const posts = await res.json()
-  return { props: { posts } }
+
+  const paths = posts.map((post) => ({
+    params: { id: post._id },
+  }))
+
+  return { paths, fallback: false }
+}
+
+export async function getStaticProps({ params }) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/posts/${params.id}`)
+  const post = await res.json()
+
+  return { props: { post } }
 }
